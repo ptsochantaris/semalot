@@ -6,9 +6,30 @@
  🤦‍♀️ "It's only a counter…"
  👨👨‍🦱👴 _"Shh!!!!"_
 
-An elementary counting semaphore for async tasks in Swift, which I use a lot in my code so I thought I should make it a package :D
+An elementary counting semaphore for async tasks in Swift, which I use a lot in my code so I thought I should turn it into a package!
 
 It's very simple and efficient, does not use any dispatch locks, and does not cause any Task queue congestion.
+
+```
+    let maxConcurrentOperations = Semalot(tickets: 3)
+
+    func getAndProcessData(for request: URLRequest) async throws {
+        await maximumOperations.takeTicket()
+        defer {
+            maximumOperations.returnTicket()
+        }
+        let data = try await urlSession.data(for: request).0
+        await doThings(with: data)
+    }
+
+    try await withThrowingTaskGroup { group in
+        for request in lotsOfRequests {
+            group.addTask {
+                getAndProcessData(for: request)
+            }
+        }
+    }
+```
 
 ## Projects
 For public projects, I've used Semalot in:
