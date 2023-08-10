@@ -13,19 +13,13 @@ It's very simple and efficient, does not use any dispatch locks, and does not ca
 ```
     let maxConcurrentOperations = Semalot(tickets: 3)
 
-    func getAndProcessData(for request: URLRequest) async throws {
-        await maximumOperations.takeTicket()
-        defer {
-            maximumOperations.returnTicket()
-        }
-        let data = try await urlSession.data(for: request).0
-        await doThings(with: data)
-    }
-
     try await withThrowingTaskGroup { group in
         for request in lotsOfRequests {
+            await maximumOperations.takeTicket()
             group.addTask {
-                getAndProcessData(for: request)
+                let data = try await urlSession.data(for: request).0
+                await doThings(with: data)
+                maximumOperations.returnTicket()
             }
         }
     }
