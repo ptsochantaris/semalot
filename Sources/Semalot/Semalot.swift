@@ -65,7 +65,7 @@ public struct Semalot {
     }
     
     /// Return a ticket to the counter after having taken one out.
-    nonisolated public func returnTicket() {
+    public func returnTicket() {
         Task.detached {
             self.continuation.yield()
         }
