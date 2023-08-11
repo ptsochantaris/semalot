@@ -2,6 +2,8 @@
 
 import PackageDescription
 
+#if swift(<5.9)
+
 let package = Package(
     name: "Semalot",
     platforms: [
@@ -28,3 +30,28 @@ let package = Package(
             dependencies: ["Semalot"]),
     ]
 )
+
+#else
+
+let package = Package(
+    name: "Semalot",
+    platforms: [
+        .macOS(.v11),
+        .iOS(.v14),
+        .watchOS(.v7)
+    ],
+    products: [
+        .library(
+            name: "Semalot",
+            targets: ["Semalot"]),
+    ],
+    targets: [
+        .target(
+            name: "Semalot"),
+        .testTarget(
+            name: "SemalotTests",
+            dependencies: ["Semalot"]),
+    ]
+)
+
+#endif
