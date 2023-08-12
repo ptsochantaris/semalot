@@ -1,6 +1,4 @@
-import XCTest
 @testable import Semalot
+import XCTest
 
-final class SemalotTests: XCTestCase {
-    
-}
+final class SemalotTests: XCTestCase {}
