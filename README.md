@@ -15,11 +15,11 @@ let maxConcurrentOperations = Semalot(tickets: 3)
 
 try await withThrowingTaskGroup { group in
     for request in lotsOfRequests {
-        await maximumOperations.takeTicket()
+        await maxConcurrentOperations.takeTicket()
         group.addTask {
             let data = try await urlSession.data(for: request).0
             await doThings(with: data)
-            maximumOperations.returnTicket()
+            maxConcurrentOperations.returnTicket()
         }
     }
 }

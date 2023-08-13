@@ -17,11 +17,11 @@ It's very simple and efficient, does not use any dispatch locks, and does not ca
 
     try await withThrowingTaskGroup { group in
         for request in lotsOfRequests {
-            await maximumOperations.takeTicket()
+            await maxConcurrentOperations.takeTicket()
             group.addTask {
                 let data = try await urlSession.data(for: request).0
                 await doThings(with: data)
-                maximumOperations.returnTicket()
+                maxConcurrentOperations.returnTicket()
             }
         }
     }
