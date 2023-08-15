@@ -1,4 +1,4 @@
-<img src="https://ptsochantaris.github.io/trailer/SemalotLogo.webp" alt="Logo" width=256>
+<img src="https://ptsochantaris.github.io/trailer/SemalotLogo.webp" alt="Logo" width=256 align="right">
 
 # Semalot
 
