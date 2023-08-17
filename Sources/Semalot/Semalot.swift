@@ -1,75 +1,58 @@
-#if swift(<5.9)
+import Lista
 
-    import Lista
+// An instance of the counting semaphore
+public final actor Semalot {
+    private var headroom: UInt
+    private var bonusRemaining: UInt = 0
+    private var bonusLoaned: UInt = 0
+    private let queue = Lista<() -> Void>()
 
-    // An instance of the counting semaphore
-    public final actor Semalot {
-        private var headroom: Int
-        private let queue = Lista<() -> Void>()
+    /// Initialise the counter with an initial ticket count
+    /// - Parameter tickets: The number of tickets that are available to take before the calling task needs to suspend until one of the tickets is returned.
+    public init(tickets: UInt) {
+        headroom = tickets
+    }
 
-        /// Initialise the counter with an initial ticket count
-        /// - Parameter tickets: The number of tickets that are available to take before the calling task needs to suspend until one of the tickets is returned.
-        public init(tickets: Int) {
-            headroom = tickets
+    /// Add one-time bonus tickets to the semaphore. Those tickets won't be re-used once they are returned but _must_ be returned just like the others. This is very useful when some constraint needs to be large initially for responsiveness, but becomes throttled over time for long operations.
+    /// - Parameter tickets: The number of one-time tickets to add.
+    public func addBonus(tickets: UInt) {
+        bonusRemaining += tickets
+    }
+
+    /// Take a ticket. If there are none available, suspend until one becomes available. Scheduling is fair, meaning that the tasks waiting will resume on a first-come-first-serve basis as tickets are returned by other tasks. Calls to this method MUST be balanced with a call to ``returnTicket()`` at some point.
+    public func takeTicket() async {
+        guard bonusRemaining == 0 else {
+            bonusRemaining -= 1
+            bonusLoaned += 1
+            return
         }
 
-        /// Take a ticket. If there are none available, suspend until one becomes available. Scheduling is fair, meaning that the tasks waiting will resume on a first-come-first-serve basis as tickets are returned by other tasks. Calls to this method MUST be balanced with a call to ``returnTicket()`` at some point.
-        public func takeTicket() async {
-            guard headroom == 0 else {
-                headroom -= 1
-                return
-            }
-
-            await withCheckedContinuation { continuation in
-                queue.append {
-                    continuation.resume()
-                }
-            }
+        guard headroom == 0 else {
+            headroom -= 1
+            return
         }
 
-        private func _returnTicket() {
-            if let nextInQueue = queue.pop() {
-                nextInQueue()
-            } else {
-                headroom += 1
-            }
-        }
-
-        /// Return a ticket to the counter after having taken one out.
-        public nonisolated func returnTicket() {
-            Task.detached {
-                await self._returnTicket()
+        await withCheckedContinuation { continuation in
+            queue.append {
+                continuation.resume()
             }
         }
     }
 
-#else
-
-    // An instance of the counting semaphore
-    public struct Semalot {
-        private let stream: AsyncStream<Void>
-        private let continuation: AsyncStream<Void>.Continuation
-
-        /// Initialise the counter with an initial ticket count
-        /// - Parameter tickets: The number of tickets that are available to take before the calling task needs to suspend until one of the tickets is returned.
-        public init(tickets: Int) {
-            (stream, continuation) = AsyncStream.makeStream(of: Void.self)
-            for _ in 0 ..< tickets {
-                continuation.yield()
-            }
-        }
-
-        /// Take a ticket. If there are none available, suspend until one becomes available. Scheduling is fair, meaning that the tasks waiting will resume on a first-come-first-serve basis as tickets are returned by other tasks. Calls to this method MUST be balanced with a call to ``returnTicket()`` at some point.
-        public func takeTicket() async {
-            await stream.first { true }
-        }
-
-        /// Return a ticket to the counter after having taken one out.
-        public func returnTicket() {
-            Task.detached {
-                continuation.yield()
-            }
+    private func _returnTicket() {
+        if bonusLoaned > 0 {
+            bonusLoaned -= 1
+        } else if let nextInQueue = queue.pop() {
+            nextInQueue()
+        } else {
+            headroom += 1
         }
     }
 
-#endif
+    /// Return a ticket to the counter after having taken one out. Not returning a ticket will eventually cause the counter to run out and stop handing more out until some are returned.
+    public nonisolated func returnTicket() {
+        Task.detached {
+            await self._returnTicket()
+        }
+    }
+}
