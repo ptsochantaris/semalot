@@ -12,10 +12,13 @@ final class SemalotTests: XCTestCase {
     @MainActor
     func testBonusTickets() async {
         let semalot = Semalot(tickets: 10)
-        await semalot.addBonus(tickets: 90)
-
+        await semalot.setBonusTickets(90)
+        
         await withTaskGroup(of: Void.self) { group in
-            for _ in 0 ..< 1000 {
+            for x in 0 ..< 500 {
+                if x == 50 {
+                    await semalot.setBonusTickets(0)
+                }
                 group.addTask { @MainActor in
                     await semalot.takeTicket()
                     self.count += 1

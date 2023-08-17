@@ -3,7 +3,7 @@ import Lista
 // An instance of the counting semaphore
 public final actor Semalot {
     private var headroom: UInt
-    private var bonusRemaining: UInt = 0
+    private var bonusTickets: UInt = 0
     private var bonusLoaned: UInt = 0
     private let queue = Lista<() -> Void>()
 
@@ -13,22 +13,16 @@ public final actor Semalot {
         headroom = tickets
     }
 
-    /// Add one-time bonus tickets to the semaphore. Those tickets won't be re-used once they are returned but _must_ be returned just like the others. This is very useful when some constraint needs to be large initially for responsiveness, but becomes throttled over time for long operations.
-    /// - Parameter tickets: The number of one-time tickets to add.
-    public func addBonus(tickets: UInt) {
-        bonusRemaining += tickets
-    }
-
     /// Take a ticket. If there are none available, suspend until one becomes available. Scheduling is fair, meaning that the tasks waiting will resume on a first-come-first-serve basis as tickets are returned by other tasks. Calls to this method MUST be balanced with a call to ``returnTicket()`` at some point.
     public func takeTicket() async {
-        guard bonusRemaining == 0 else {
-            bonusRemaining -= 1
-            bonusLoaned += 1
+        guard headroom == 0 else {
+            headroom -= 1
             return
         }
 
-        guard headroom == 0 else {
-            headroom -= 1
+        guard bonusTickets == 0 else {
+            bonusTickets -= 1
+            bonusLoaned += 1
             return
         }
 
@@ -37,6 +31,11 @@ public final actor Semalot {
                 continuation.resume()
             }
         }
+    }
+
+    /// Set this to a non-zero value to create a temporary extra bunch of tickets that can be sent out immediately. These tickets won't be re-used once they are returned - but _they must_ be returned just like the others. This is very useful when some constraint needs to be large initially for responsiveness, but becomes throttled over time for long operations.
+    public func setBonusTickets(_ count: UInt) {
+        bonusTickets = count
     }
 
     private func _returnTicket() {

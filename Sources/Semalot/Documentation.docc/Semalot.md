@@ -35,3 +35,6 @@ It's very simple and efficient, does not use any dispatch locks, and does not ca
 ### Taking and returning tickets
 - ``Semalot/Semalot/takeTicket()``
 - ``Semalot/Semalot/returnTicket()``
+
+### Using bonus tickets
+- ``Semalot/Semalot/setBonusTickets(_:)``
