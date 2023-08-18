@@ -34,6 +34,5 @@ try await withThrowingTaskGroup { group in
 }
 ```
 
-
 ## License
 Copyright (c) 2023 Paul Tsochantaris. Licensed under the MIT License, see LICENSE for details.

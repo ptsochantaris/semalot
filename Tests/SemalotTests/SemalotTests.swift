@@ -13,7 +13,7 @@ final class SemalotTests: XCTestCase {
     func testBonusTickets() async {
         let semalot = Semalot(tickets: 10)
         await semalot.setBonusTickets(90)
-        
+
         await withTaskGroup(of: Void.self) { group in
             for x in 0 ..< 500 {
                 if x == 50 {

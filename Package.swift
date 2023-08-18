@@ -7,27 +7,27 @@ let package = Package(
     platforms: [
         .macOS(.v11),
         .iOS(.v14),
-        .watchOS(.v7),
+        .watchOS(.v7)
     ],
     products: [
         .library(
             name: "Semalot",
             targets: ["Semalot"]
-        ),
+        )
     ],
     dependencies: [
-        .package(url: "https://github.com/ptsochantaris/lista", branch: "main"),
+        .package(url: "https://github.com/ptsochantaris/lista", branch: "main")
     ],
     targets: [
         .target(
             name: "Semalot",
             dependencies: [
-                .product(name: "Lista", package: "lista"),
+                .product(name: "Lista", package: "lista")
             ]
         ),
         .testTarget(
             name: "SemalotTests",
             dependencies: ["Semalot"]
-        ),
+        )
     ]
 )
