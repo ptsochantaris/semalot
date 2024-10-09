@@ -1,16 +1,17 @@
+import Foundation
 @testable import Semalot
-import XCTest
+import Testing
 
-final class SemalotTests: XCTestCase {
+final class SemalotTests: Sendable {
+    @MainActor
     var count = 0 {
         didSet {
             print(String(count), terminator: " ")
-            XCTAssert(count >= 0 && count <= 100)
+            #expect(count >= 0 && count <= 100)
         }
     }
 
-    @MainActor
-    func testBonusTickets() async {
+    @Test func testBonusTickets() async {
         let semalot = Semalot(tickets: 10)
         await semalot.setBonusTickets(90)
 
@@ -19,17 +20,17 @@ final class SemalotTests: XCTestCase {
                 if x == 50 {
                     await semalot.setBonusTickets(0)
                 }
-                group.addTask { @MainActor in
+                group.addTask {
                     await semalot.takeTicket()
-                    self.count += 1
+                    await MainActor.run { self.count += 1 }
                     try? await Task.sleep(nanoseconds: UInt64.random(in: 5 ..< 100) * NSEC_PER_MSEC)
-                    self.count -= 1
+                    await MainActor.run { self.count -= 1 }
                     semalot.returnTicket()
                 }
             }
         }
 
         print()
-        XCTAssertEqual(count, 0)
+        await #expect(count == 0)
     }
 }
