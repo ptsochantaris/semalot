@@ -11,7 +11,7 @@ final class SemalotTests: Sendable {
         }
     }
 
-    @Test func testBonusTickets() async {
+    @Test func bonusTickets() async {
         let semalot = Semalot(tickets: 10)
         await semalot.setBonusTickets(90)
 
