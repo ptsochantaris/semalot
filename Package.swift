@@ -1,13 +1,15 @@
-// swift-tools-version: 6.0
+// swift-tools-version: 6.3
 
 import PackageDescription
 
 let package = Package(
     name: "Semalot",
     platforms: [
-        .macOS(.v11),
-        .iOS(.v14),
-        .watchOS(.v7)
+        .macOS(.v15),
+        .iOS(.v18),
+        .tvOS(.v18),
+        .watchOS(.v11),
+        .visionOS(.v2)
     ],
     products: [
         .library(

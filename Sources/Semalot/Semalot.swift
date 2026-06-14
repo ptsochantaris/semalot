@@ -6,7 +6,7 @@ public final actor Semalot {
     private let maxHeadroom: UInt
     private var bonusTickets: UInt = 0
     private var bonusLoaned: UInt = 0
-    private let queue = Lista<() -> Void>()
+    private let queue = Lista<CheckedContinuation<Void, Never>>()
 
     /// Initialise the counter with an initial ticket count
     /// - Parameter tickets: The number of tickets that are available to take before the calling task needs to suspend until one of the tickets is returned.
@@ -29,15 +29,20 @@ public final actor Semalot {
         }
 
         await withCheckedContinuation { continuation in
-            queue.append {
-                continuation.resume()
-            }
+            queue.append(continuation)
         }
     }
 
     /// Set this to a non-zero value to create a temporary extra bunch of tickets that can be sent out immediately. These tickets won't be re-used once they are returned - but _they must_ be returned just like the others. This is very useful when some constraint needs to be large initially for responsiveness, but becomes throttled over time for long operations.
     public func setBonusTickets(_ count: UInt) {
         bonusTickets = count
+        // Hand bonus tickets to any tasks that are already suspended in the
+        // queue, otherwise they would only ever benefit future callers.
+        while bonusTickets > 0, let next = queue.pop() {
+            bonusTickets -= 1
+            bonusLoaned += 1
+            next.resume()
+        }
     }
 
     /// A convenience method that will wait until all tickets have been returned before continuing. No new tickets will be issued if requested from other places until this method instance returns. Note that this does *not* take into account any bonus tickets.
@@ -54,7 +59,7 @@ public final actor Semalot {
         if bonusLoaned > 0 {
             bonusLoaned -= 1
         } else if let nextInQueue = queue.pop() {
-            nextInQueue()
+            nextInQueue.resume()
         } else {
             headroom += 1
         }
